@@ -8,6 +8,7 @@ REPO_PYPI = 'http://localhost:8081/repository/pypi'
 # Local avaliable raw inline proxy nexus repository pointed to https://pypi.org/pypi
 REPO_PYPI_FEED = 'http://localhost:8081/repository/pypi-feed'
 
+REPO_NPM = 'http://localhost:8081/repository/npm-proxy/'
 def get_package_links(package_name):
     return requests.get(f"{REPO_PYPI}/simple/{package_name}").text
 
@@ -49,4 +50,22 @@ def download(package_name,package_version,package_data):
         return str(e), 404
     req = requests.get(f"{REPO_PYPI}/packages/{package_name}/{package_version}/{package_data}", stream = True)
     return Response(stream_with_context(req.iter_content(chunk_size=1024)), content_type = req.headers['content-type'])
- 
+
+
+@app.route("/repository/npm-proxy/<package_name>")
+def npm_index(package_name):
+    original_index = requests.get(f"{REPO_NPM}/{package_name}").json()
+    versions_to_del = []
+
+    for version in original_index.get('time'):
+        if version not in ['modified', 'created']:
+            date = original_index.get('time').get(version)
+            #print((f"[checking] {version}=={date}"))
+            if compare_dates(date):
+                print(f"{version} Запрещено к скачиванию. Дата публикации {date}")
+                versions_to_del.append(version)
+    for version in versions_to_del:
+        original_index['versions'].pop(version)
+        original_index['time'].pop(version)
+
+    return original_index
