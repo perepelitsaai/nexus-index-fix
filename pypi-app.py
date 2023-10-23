@@ -69,3 +69,15 @@ def npm_index(package_name):
         original_index['time'].pop(version)
 
     return original_index
+
+@app.route("/repository/npm-proxy/<package_name>/-/<package_name>-<package_version>.tgz")
+def npm_index_direct_download(package_name, package_version):
+    original_index = requests.get(f"{REPO_NPM}/{package_name}").json()
+    date = original_index.get('time').get(package_version)
+    if compare_dates(date):
+                print(f"{package_name}@{package_version} запрещен к скачиванию. Дата публикации {date}")
+                return  f"Запрещено к скачиванию. Дата публикации {date}", 403
+    
+    req = requests.get(f"{REPO_NPM}/<package_name>/-/<package_name>-<package_version>.tgz", stream = True)
+    return Response(stream_with_context(req.iter_content(chunk_size=1024)), content_type = req.headers['content-type'])
+ 
