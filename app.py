@@ -2,7 +2,7 @@ import requests
 from  flask import Flask, Response, request, stream_with_context
 from datetime import datetime
 from dotenv import load_dotenv
-
+import os
 load_dotenv()
 RESTRICT_DATE =  os.getenv("RESTRICT_DATE")
 # Local avaliable pypi proxy nexus repository pointed to https://pypi.org/
@@ -32,10 +32,12 @@ def simple(package_name):
         link = link.strip()
         if link.startswith("<a href"):
            link_version = link.split('/')[4]
-           link_version_upload_date = package_meta.get('releases').get(link_version)[0].get('upload_time_iso_8601')
-           if not compare_dates(link_version_upload_date):
-                print(f"{link_version} == {link_version_upload_date}")
-                new_links.append(link)
+           # if not withdrawn
+           if package_meta.get('releases').get(link_version):
+                link_version_upload_date = package_meta.get('releases').get(link_version)[0].get('upload_time_iso_8601')
+                if not compare_dates(link_version_upload_date):
+                        print(f"{link_version} == {link_version_upload_date}")
+                        new_links.append(link)
         else:
             new_links.append(link)
     return "\n".join(new_links)
