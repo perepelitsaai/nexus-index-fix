@@ -1,12 +1,16 @@
 import requests
 from  flask import Flask, Response, request, stream_with_context
 from datetime import datetime
-app = Flask(__name__)
-RESTRICT_DATE = "2022-02-20T00:00:00.000000Z"
+from dotenv import load_dotenv
+
+load_dotenv()
+RESTRICT_DATE =  os.getenv("RESTRICT_DATE")
 # Local avaliable pypi proxy nexus repository pointed to https://pypi.org/
-REPO_PYPI = 'http://localhost:8081/repository/pypi'
+REPO_PYPI =  os.getenv("REPO_PYPI")
 # Local avaliable raw inline proxy nexus repository pointed to https://pypi.org/pypi
-REPO_PYPI_FEED = 'http://localhost:8081/repository/pypi-feed'
+REPO_PYPI_FEED =  os.getenv("REPO_PYPI_FEED")
+
+app = Flask(__name__)
 
 def get_package_links(package_name):
     return requests.get(f"{REPO_PYPI}/simple/{package_name}").text
